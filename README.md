@@ -3,4 +3,4 @@ Building an AI car that can evolve by using SOTA technology, like reinforcement 
 Will be coming soon!
 
 # Video link
-TBD
+[bilibili](https://www.bilibili.com/video/BV1LWcCegEBx/)
