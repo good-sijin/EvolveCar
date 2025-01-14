@@ -58,9 +58,10 @@ setup(
     classifiers=CLASSIFIERS,
     url="https://github.com/good-sijin/EvolveCar/",
     download_url="https://github.com/good-sijin/EvolveCar/tags",
-    python_requires=">=3.8.0",
+    python_requires="==3.8.0",
     install_requires=requirements,
     include_package_data=False,
     data_files=[],
     entry_points={},
+    packages=find_packages(exclude=["data"]),
 )

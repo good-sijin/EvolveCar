@@ -1,2 +1,5 @@
 # formatter
 autopep8
+numpy
+opencv-python
+carla
