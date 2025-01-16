@@ -11,7 +11,15 @@ RUN apt-get update \
     libvulkan-dev \
     vulkan-tools \
     python3-pip \ 
-    && rm -rf /var/lib/apt/lists/*
+    zsh \
+    sudo \
+    git
+
+# Grant carla user with sudo privileges
+RUN usermod -aG sudo carla
+
+# New added for disable sudo password
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 RUN pip3 install uv
 
