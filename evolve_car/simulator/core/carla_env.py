@@ -22,23 +22,22 @@
  """
 
 
-import gymnasium as gym
-from gymnasium.utils import seeding
-from gymnasium.spaces import Discrete, Box, Dict
-import numpy as np
-import random
-
-from typing import Optional
-import logging
-import carla
-
-import time
 import copy
+import logging
+import random
+import time
+from typing import Optional
+
+import carla
+import gymnasium as gym
+import numpy as np
+from gymnasium.spaces import Box, Dict, Discrete
+from gymnasium.utils import seeding
 from skimage.transform import resize
 
-from evolve_car.simulator.core.route_planner import RoutePlanner
 from evolve_car.simulator.core.misc import *
 from evolve_car.simulator.core.render import BirdeyeRender
+from evolve_car.simulator.core.route_planner import RoutePlanner
 
 
 class CarlaEnv(gym.Env):
@@ -721,7 +720,8 @@ class CarlaEnv(gym.Env):
 
 
 if __name__ == "__main__":
-
+    # Start carla outside of the script:
+    # /home/carla/CarlaUnreal.sh  -carla-port=22912 -quality-level=Low -RenderOffScreen
     from gymnasium.envs.registration import register
     register(
         id='carla-v0',
