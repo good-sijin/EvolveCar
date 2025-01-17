@@ -1,19 +1,14 @@
-FROM carlasim/carla:0.10.0
+FROM carlasim/carla:0.9.15
 USER root
-
-ENV NVIDIA_DRIVER_CAPABILITIES=all
-ENV NVIDIA_VISIBLE_DEVICES=all
 
 RUN apt-get update \
     && apt-get install -y \
-    libxext6 \
-    libvulkan1 \
-    libvulkan-dev \
-    vulkan-tools \
-    python3-pip \ 
     zsh \
     sudo \
-    git
+    git \
+    wget \
+    curl \
+    autojump
 
 # Grant carla user with sudo privileges
 RUN usermod -aG sudo carla
@@ -21,8 +16,8 @@ RUN usermod -aG sudo carla
 # New added for disable sudo password
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN pip3 install uv
-
-COPY nvidia_icd.json /etc/vulkan/icd.d
+# Leave it alone, just do it muanully.
+# RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 USER carla
+
