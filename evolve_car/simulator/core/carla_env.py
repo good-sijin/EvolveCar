@@ -1,3 +1,27 @@
+"""
+ Copyright (c) 2025 Jim Li
+ 
+ Most of the code is forked from https://github.com/cjy1992/gym-carla.
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+ the Software without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ the Software, and to permit persons to whom the Software is furnished to do so,
+ subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ """
+
+
 import gymnasium as gym
 from gymnasium.utils import seeding
 from gymnasium.spaces import Discrete, Box, Dict
@@ -7,15 +31,10 @@ import random
 from typing import Optional
 import logging
 import carla
-from ray.rllib.utils.test_utils import (
-    add_rllib_example_script_args,
-    run_rllib_example_script_experiment,
-)
+
 import time
 import copy
 from skimage.transform import resize
-
-from ray.tune.registry import get_trainable_cls, register_env  # noqa
 
 from evolve_car.simulator.core.route_planner import RoutePlanner
 from evolve_car.simulator.core.misc import *
@@ -53,8 +72,9 @@ class CarlaEnv(gym.Env):
         self.desired_speed = config.get('desired_speed', 8)
         self.max_ego_spawn_times = config.get('max_ego_spawn_times', 200)
         self.display_route = config.get('display_route', True)
-        self.pixor = config.get('pixor', False)
-
+        self.pixor = config.get('pixor', True)
+        self.pixor_size = config.get('pixor', 64)
+        self.dests = None
         # Action space for the car are acc and steering angle.
         acc_range = config.get("acc_range", [0, 1])
         steer_range = config.get("steer_range", [0, 20])
@@ -63,7 +83,7 @@ class CarlaEnv(gym.Env):
 
         # Observation range and resolution, which can deduce the grid map size.
         self.obs_range = config.get("obs_range", 32)
-        self.obs_resolution = config.get("obs_resolution", 0.2)
+        self.obs_resolution = config.get("obs_resolution", 0.125)
         self.obs_size = int(self.obs_range / self.obs_resolution)
 
         # Obsevation space for the car are camera, lidar, bireye, car-state, etc.
@@ -73,14 +93,21 @@ class CarlaEnv(gym.Env):
             'birdeye': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
             'state': Box(np.array([-2, -1, -5, 0]), np.array([2, 1, 30, 1]), dtype=np.float32)
         }
+
+        if self.pixor:
+            observation_space_dict.update({
+                'roadmap': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
+                'vh_clas': Box(low=0, high=1, shape=(self.pixor_size, self.pixor_size, 1), dtype=np.float32),
+                'vh_regr': Box(low=-5, high=5, shape=(self.pixor_size, self.pixor_size, 6), dtype=np.float32),
+                'pixor_state': Box(np.array([-1000, -1000, -1, -1, -5]), np.array([1000, 1000, 1, 1, 20]), dtype=np.float32)
+            })
         self.observation_space = Dict(observation_space_dict)
 
         # Connect to carla server and get world object
         logging.info("connecting to Carla server...")
-        client = carla.Client('localhost', config.get("port", 10009))
+        client = carla.Client('localhost', config.get("port", 3004))
         client.set_timeout(10.0)
         # print(client.get_available_maps())
-        # ['/Game/Carla/Maps/Town10HD_Opt', '/Game/Carla/Maps/Mine_01']
         self.world = client.load_world(
             config.get("town", "/Game/Carla/Maps/Town10HD_Opt"))
         logging.info("Carla server connected!")
@@ -139,6 +166,12 @@ class CarlaEnv(gym.Env):
 
         # Initialize the renderer
         self._init_renderer()
+        # Get pixel grid points
+        if self.pixor:
+            x, y = np.meshgrid(np.arange(self.pixor_size), np.arange(
+                self.pixor_size))  # make a canvas with coordinates
+            x, y = x.flatten(), y.flatten()
+            self.pixel_grid = np.vstack((x, y)).T
 
     def reset(self, *, seed=None, options=None):
         # Clear sensor objects
@@ -483,20 +516,17 @@ class CarlaEnv(gym.Env):
         # Roadmap
         if self.pixor:
             roadmap_render_types = ['roadmap']
-        else:
-            roadmap_render_types = []
-        if self.display_route:
-            roadmap_render_types.append('waypoints')
-        self.birdeye_render.render(self.display, roadmap_render_types)
-        roadmap = pygame.surfarray.array3d(self.display)
-        roadmap = roadmap[0:self.display_size, :, :]
-        roadmap = display_to_rgb(roadmap, self.obs_size)
-        # Add ego vehicle
-        for i in range(self.obs_size):
-            for j in range(self.obs_size):
-                if abs(birdeye[i, j, 0] - 255) < 20 and abs(birdeye[i, j, 1] - 0) < 20 and abs(birdeye[i, j, 0] - 255) < 20:
-                    roadmap[i, j, :] = birdeye[i, j, :]
-
+            if self.display_route:
+                roadmap_render_types.append('waypoints')
+            self.birdeye_render.render(self.display, roadmap_render_types)
+            roadmap = pygame.surfarray.array3d(self.display)
+            roadmap = roadmap[0:self.display_size, :, :]
+            roadmap = display_to_rgb(roadmap, self.obs_size)
+            # Add ego vehicle
+            for i in range(self.obs_size):
+                for j in range(self.obs_size):
+                    if abs(birdeye[i, j, 0] - 255) < 20 and abs(birdeye[i, j, 1] - 0) < 20 and abs(birdeye[i, j, 0] - 255) < 20:
+                        roadmap[i, j, :] = birdeye[i, j, :]
         # Display birdeye image
         birdeye_surface = rgb_to_display_surface(birdeye, self.display_size)
         self.display.blit(birdeye_surface, (0, 0))
@@ -505,6 +535,7 @@ class CarlaEnv(gym.Env):
         point_cloud = []
         # Get point cloud data
         for lidar_detection in self.lidar_data:
+            # The api interface has change to LidarDetection.
             location = lidar_detection.point
             point_cloud.append([location.x, location.y, -location.z])
         point_cloud = np.array(point_cloud)
@@ -523,20 +554,21 @@ class CarlaEnv(gym.Env):
         if self.display_route:
             wayptimg = (birdeye[:, :, 0] <= 10) * \
                 (birdeye[:, :, 1] <= 10) * (birdeye[:, :, 2] >= 240)
+
         else:
             wayptimg = birdeye[:, :, 0] < 0  # Equal to a zero matrix
         wayptimg = np.expand_dims(wayptimg, axis=2)
         wayptimg = np.fliplr(np.rot90(wayptimg, 3))
 
         # Get the final lidar image
-        # lidar = np.concatenate((lidar, wayptimg), axis=2)
+        lidar = np.concatenate((lidar, wayptimg), axis=2)
         lidar = np.flip(lidar, axis=1)
         lidar = np.rot90(lidar, 1)
         lidar = lidar * 255
 
         # Display lidar image
-        # lidar_surface = rgb_to_display_surface(lidar, self.display_size)
-        # self.display.blit(lidar_surface, (self.display_size, 0))
+        lidar_surface = rgb_to_display_surface(lidar, self.display_size)
+        self.display.blit(lidar_surface, (self.display_size, 0))
 
         # Display camera image
         camera = resize(self.camera_img, (self.obs_size, self.obs_size)) * 255
@@ -689,20 +721,18 @@ class CarlaEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    from gymnasium.envs.registration import register
 
+    from gymnasium.envs.registration import register
     register(
         id='carla-v0',
         entry_point='evolve_car.simulator.core.carla_env:CarlaEnv',
     )
-
     # Set gym-carla environment
-    env = gym.make('carla-v0')
+    env = gym.make('carla-v0', config={"port": 3006})
     obs = env.reset()
 
     while True:
         action = [2.0, 0.0]
         obs, r, done, info = env.step(action)
-
         if done:
             obs = env.reset()
