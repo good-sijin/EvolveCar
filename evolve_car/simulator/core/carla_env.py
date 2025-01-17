@@ -721,7 +721,8 @@ class CarlaEnv(gym.Env):
 
 
 if __name__ == "__main__":
-
+    # Start carla outside of the script:
+    # /home/carla/CarlaUnreal.sh  -carla-port=22912 -quality-level=Low -RenderOffScreen
     from gymnasium.envs.registration import register
     register(
         id='carla-v0',
