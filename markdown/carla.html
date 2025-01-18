@@ -1,0 +1,532 @@
+
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Carla &#8212; EvolveCar  文档</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'markdown/carla';</script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="FAQ" href="../faq/index.html" />
+    <link rel="prev" title="Setup" href="setup.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="zh-CN"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">跳转至主要内容</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>回到顶部</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="版本警告"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="网页导航">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">EvolveCar  文档</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
+    Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="setup.html">
+    Setup
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Carla
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../faq/index.html">
+    FAQ
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">搜索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="亮色"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="暗色"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="搜索" aria-label="搜索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">搜索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="当前页面">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
+    Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="setup.html">
+    Setup
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Carla
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../faq/index.html">
+    FAQ
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="亮色"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="暗色"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="章节导航">
+  <p class="bd-links__title" role="heading" aria-level="1">章节导航</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="初始页面">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Carla</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="carla">
+<h1>Carla<a class="headerlink" href="#carla" title="Link to this heading">#</a></h1>
+<p>We use carla as our simulator. However it is really annoying to setup carla inside docker.
+So, we document the procedure about how to make it work.</p>
+<section id="step-by-step">
+<h2>Step by step<a class="headerlink" href="#step-by-step" title="Link to this heading">#</a></h2>
+<section id="update-nvidia-driver-version-to-550">
+<h3>Update nvidia driver version to 550.<a class="headerlink" href="#update-nvidia-driver-version-to-550" title="Link to this heading">#</a></h3>
+<p>Since there is known bug in lower version, just upgrade to latest one.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>nvidia-driver-550
+</pre></div>
+</div>
+</section>
+<section id="upgrade-nvidia-container-toolkit">
+<h3>Upgrade nvidia-container-toolkit.<a class="headerlink" href="#upgrade-nvidia-container-toolkit" title="Link to this heading">#</a></h3>
+<p>Please refer to the document in: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+However, some network problem make me turn to another way. Download the <code class="docutils literal notranslate"><span class="pre">.deb</span></code> file from github and install every package manually.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install them in order.</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">libnvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">dev_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">libnvidia</span><span class="o">-</span><span class="n">container1_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">libnvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">dev_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit</span><span class="o">-</span><span class="n">base_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">libnvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">tools_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">nvidia</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">toolkit_1</span><span class="mf">.17.3</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+</pre></div>
+</div>
+</section>
+<section id="rebuild-the-docker">
+<h3>Rebuild the docker.<a class="headerlink" href="#rebuild-the-docker" title="Link to this heading">#</a></h3>
+<div class="highlight-dockerfile notranslate"><div class="highlight"><pre><span></span><span class="k">FROM</span><span class="w"> </span><span class="s">carlasim/carla:0.10.0</span>
+<span class="k">USER</span><span class="w"> </span><span class="s">root</span>
+
+<span class="k">ENV</span><span class="w"> </span><span class="nv">NVIDIA_DRIVER_CAPABILITIES</span><span class="o">=</span>all
+<span class="k">ENV</span><span class="w"> </span><span class="nv">NVIDIA_VISIBLE_DEVICES</span><span class="o">=</span>all
+
+<span class="k">RUN</span><span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>libxext6<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>libvulkan1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>libvulkan-dev<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>vulkan-tools
+
+<span class="c"># You must copy the one in your local computer into current directory.</span>
+<span class="c"># cp /usr/share/vulkan/icd.d/nvidia_icd.json .</span>
+<span class="k">COPY</span><span class="w"> </span>nvidia_icd.json<span class="w"> </span>/etc/vulkan/icd.d
+<span class="k">USER</span><span class="w"> </span><span class="s">carla</span>
+</pre></div>
+</div>
+</section>
+<section id="run">
+<h3>Run<a class="headerlink" href="#run" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>--privileged<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--net<span class="o">=</span>host<span class="w"> </span>-e<span class="w"> </span><span class="nv">DISPLAY</span><span class="o">=</span><span class="nv">$DISPLAY</span><span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/tmp/.X11-unix:/tmp/.X11-unix:rw<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>carlasim/carla:0.10.0-fixed<span class="w"> </span>/bin/bash<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>CarlaUnreal.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-windowed<span class="w"> </span>-ResX<span class="o">=</span><span class="m">600</span><span class="w"> </span>-ResY<span class="o">=</span><span class="m">600</span><span class="w"> </span>--carla-rpc-port<span class="o">=</span><span class="m">22912</span><span class="w"> </span>-quality-level<span class="o">=</span>Low
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="setup.html"
+       title="上一页">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">上一页</p>
+        <p class="prev-next-title">Setup</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../faq/index.html"
+       title="下一页">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">下一页</p>
+        <p class="prev-next-title">FAQ</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> 当前页面
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step">Step by step</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-nvidia-driver-version-to-550">Update nvidia driver version to 550.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#upgrade-nvidia-container-toolkit">Upgrade nvidia-container-toolkit.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rebuild-the-docker">Rebuild the docker.</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run">Run</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>本页</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/markdown/carla.md.txt"
+            rel="nofollow">显示源代码</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, jim.li.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    由 <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3创建。
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  使用 <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1构建.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
