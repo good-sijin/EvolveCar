@@ -1,0 +1,22 @@
+authors = 'sygin.li@gmail.com'
+license = 'MIT'
+
+[project]
+name = "evolvecar"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "autopep8>=2.3.2",
+    "carla>=0.9.15",
+    "gymnasium>=1.0.0",
+    "matplotlib>=3.10.0",
+    "opencv-python>=4.10.0.84",
+    "pygame>=2.6.1",
+    "ray[rllib]>=2.40.0",
+    "scikit-image>=0.25.0",
+    "setuptools>=75.8.0",
+    "torch>=2.5.1",
+]

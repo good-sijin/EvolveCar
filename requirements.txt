@@ -3,3 +3,14 @@ autopep8
 numpy
 opencv-python
 carla
+
+# ------Ray related------
+ray[rllib]
+PyYAML==5.4.1
+paramiko==2.7.2
+scp==0.13.3
+boto3==1.17.9
+# Local prerequisites
+pygame==2.0.1
+tensorboard
+gym
