@@ -8,6 +8,7 @@ An AI car that utilize deep reinforcement learning.
    :caption: User Guide:
 
    markdown/architecture
+   markdown/setup
    markdown/carla
 
 .. toctree::
