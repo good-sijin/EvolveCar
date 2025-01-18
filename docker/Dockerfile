@@ -19,5 +19,8 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 # Leave it alone, just do it muanully.
 # RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Fix sphinx build error.
+ENV LC_ALL="C.UTF-8"
+
 USER carla
 

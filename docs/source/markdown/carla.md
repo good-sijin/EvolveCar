@@ -2,13 +2,13 @@
 We use carla as our simulator. However it is really annoying to setup carla inside docker.
 So, we document the procedure about how to make it work.
 
-# Step by step
-##  Update nvidia driver version to 550. 
+## Step by step
+### Update nvidia driver version to 550. 
 Since there is known bug in lower version, just upgrade to latest one.
 ```bash
 sudo apt install nvidia-driver-550
 ```
-## Upgrade nvidia-container-toolkit.
+### Upgrade nvidia-container-toolkit.
 Please refer to the document in: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 However, some network problem make me turn to another way. Download the `.deb` file from github and install every package manually.
 ```
@@ -21,7 +21,7 @@ sudo dpkg -i libnvidia-container-tools_1.17.3-1_amd64.deb
 sudo dpkg -i nvidia-container-toolkit_1.17.3-1_amd64.deb
 ```
 
-## Rebuild the docker. 
+### Rebuild the docker. 
 ```dockerfile
 FROM carlasim/carla:0.10.0
 USER root
@@ -42,7 +42,7 @@ COPY nvidia_icd.json /etc/vulkan/icd.d
 USER carla
 ```
 
-## Run
+### Run
 ``` bash
 docker run --privileged --gpus all \
   --net=host -e DISPLAY=$DISPLAY  \
