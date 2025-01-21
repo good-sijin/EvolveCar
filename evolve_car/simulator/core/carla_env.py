@@ -52,7 +52,7 @@ class CarlaEnv(gym.Env):
         self.display_size = config.get('display_size', 256)
         # the number of past steps to draw
         self.max_past_step = config.get('max_past_step', 1)
-        self.number_of_vehicles = config.get('number_of_vehicles', 10)
+        self.number_of_vehicles = config.get('number_of_vehicles', 0)
         self.number_of_walkers = config.get('number_of_walkers', 0)
         # time interval between two frames
         self.dt = config.get('dt', 0.1)
@@ -72,13 +72,14 @@ class CarlaEnv(gym.Env):
         self.max_ego_spawn_times = config.get('max_ego_spawn_times', 200)
         self.display_route = config.get('display_route', True)
         self.pixor = config.get('pixor', True)
-        self.pixor_size = config.get('pixor', 64)
+        self.pixor_size = config.get('pixor_size', 64)
+        self.with_lidar = config.get('with_lidar', False)
         self.dests = None
         # Action space for the car are acc and steering angle.
-        acc_range = config.get("acc_range", [0, 1])
-        steer_range = config.get("steer_range", [0, 20])
+        acc_range = config.get("acc_range", [-3.0, 3.0])
+        steer_range = config.get("steer_range", [-0.3, 0.3])
         self.action_space = Box(np.array([acc_range[0], steer_range[0]]),
-                                np.array([steer_range[1], steer_range[1]]), dtype=np.float32)
+                                np.array([acc_range[1], steer_range[1]]), dtype=np.float32)
 
         # Observation range and resolution, which can deduce the grid map size.
         self.obs_range = config.get("obs_range", 32)
@@ -87,19 +88,24 @@ class CarlaEnv(gym.Env):
 
         # Obsevation space for the car are camera, lidar, bireye, car-state, etc.
         observation_space_dict = {
-            'camera': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
-            'lidar': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
+            # 'camera': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
             'birdeye': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
-            'state': Box(np.array([-2, -1, -5, 0]), np.array([2, 1, 30, 1]), dtype=np.float32)
+            # 'state': Box(np.array([-2, -1, -5, 0]), np.array([2, 1, 30, 1]), dtype=np.float32)
         }
+        if self.with_lidar:
+            observation_space_dict.update({
+                'lidar': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
+            }
+            )
 
         if self.pixor:
-            observation_space_dict.update({
-                'roadmap': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
-                'vh_clas': Box(low=0, high=1, shape=(self.pixor_size, self.pixor_size, 1), dtype=np.float32),
-                'vh_regr': Box(low=-5, high=5, shape=(self.pixor_size, self.pixor_size, 6), dtype=np.float32),
-                'pixor_state': Box(np.array([-1000, -1000, -1, -1, -5]), np.array([1000, 1000, 1, 1, 20]), dtype=np.float32)
-            })
+            pass
+            # observation_space_dict.update({
+            #     'roadmap': Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8),
+            #     'vh_clas': Box(low=0, high=1, shape=(self.pixor_size, self.pixor_size, 1), dtype=np.float32),
+            #     'vh_regr': Box(low=-5, high=5, shape=(self.pixor_size, self.pixor_size, 6), dtype=np.float32),
+            #     'pixor_state': Box(np.array([-1000, -1000, -1, -1, -5]), np.array([1000, 1000, 1, 1, 20]), dtype=np.float32)
+            # })
         self.observation_space = Dict(observation_space_dict)
 
         # Connect to carla server and get world object
@@ -134,14 +140,15 @@ class CarlaEnv(gym.Env):
         self.collision_hist_l = 1  # collision history length
         self.collision_bp = self.world.get_blueprint_library().find('sensor.other.collision')
 
-        # Lidar sensor
-        self.lidar_data = None
-        self.lidar_height = 2.1
-        self.lidar_trans = carla.Transform(
-            carla.Location(x=0.0, z=self.lidar_height))
-        self.lidar_bp = self.world.get_blueprint_library().find('sensor.lidar.ray_cast')
-        self.lidar_bp.set_attribute('channels', '32')
-        self.lidar_bp.set_attribute('range', '5000')
+        if self.with_lidar:
+            # Lidar sensor
+            self.lidar_data = None
+            self.lidar_height = 2.1
+            self.lidar_trans = carla.Transform(
+                carla.Location(x=0.0, z=self.lidar_height))
+            self.lidar_bp = self.world.get_blueprint_library().find('sensor.lidar.ray_cast')
+            self.lidar_bp.set_attribute('channels', '32')
+            self.lidar_bp.set_attribute('range', '5000')
 
         # Camera sensor
         self.camera_img = np.zeros(
@@ -255,13 +262,13 @@ class CarlaEnv(gym.Env):
                 self.collision_hist.pop(0)
             self.collision_hist = []
 
-        # Add lidar sensor
-        self.lidar_sensor = self.world.spawn_actor(
-            self.lidar_bp, self.lidar_trans, attach_to=self.ego)
-        self.lidar_sensor.listen(lambda data: get_lidar_data(data))
-
-        def get_lidar_data(data):
-            self.lidar_data = data
+        if self.with_lidar:
+            def get_lidar_data(data):
+                self.lidar_data = data
+            # Add lidar sensor
+            self.lidar_sensor = self.world.spawn_actor(
+                self.lidar_bp, self.lidar_trans, attach_to=self.ego)
+            self.lidar_sensor.listen(lambda data: get_lidar_data(data))
 
         # Add camera sensor
         self.camera_sensor = self.world.spawn_actor(
@@ -289,11 +296,10 @@ class CarlaEnv(gym.Env):
         # Set ego information for render
         self.birdeye_render.set_hero(self.ego, self.ego.id)
 
-        return self._get_obs()
+        return self._get_obs(), {"env_state": "reset"}
 
     def step(self, action):
-        acc = action[0]
-        steer = action[1]
+        acc, steer = action
 
         # Convert acceleration to throttle and brake
         if acc > 0:
@@ -306,6 +312,7 @@ class CarlaEnv(gym.Env):
         # Apply control
         act = carla.VehicleControl(throttle=float(
             throttle), steer=float(-steer), brake=float(brake))
+
         self.ego.apply_control(act)
 
         self.world.tick()
@@ -333,7 +340,8 @@ class CarlaEnv(gym.Env):
         self.time_step += 1
         self.total_step += 1
 
-        return (self._get_obs(), self._get_reward(), self._terminal(), copy.deepcopy(info))
+        truncated = False
+        return (self._get_obs(), self._get_reward(), self._terminal(), truncated, copy.deepcopy(info))
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -530,44 +538,46 @@ class CarlaEnv(gym.Env):
         birdeye_surface = rgb_to_display_surface(birdeye, self.display_size)
         self.display.blit(birdeye_surface, (0, 0))
 
-        # Lidar image generation
-        point_cloud = []
-        # Get point cloud data
-        for lidar_detection in self.lidar_data:
-            # The api interface has change to LidarDetection.
-            location = lidar_detection.point
-            point_cloud.append([location.x, location.y, -location.z])
-        point_cloud = np.array(point_cloud)
-        # Separate the 3D space to bins for point cloud, x and y is set according to self.lidar_bin,
-        # and z is set to be two bins.
-        y_bins = np.arange(-(self.obs_range - self.d_behind),
-                           self.d_behind+self.lidar_bin, self.lidar_bin)
-        x_bins = np.arange(-self.obs_range/2, self.obs_range /
-                           2+self.lidar_bin, self.lidar_bin)
-        z_bins = [-self.lidar_height-1, -self.lidar_height+0.25, 1]
-        # Get lidar image according to the bins
-        lidar, _ = np.histogramdd(point_cloud, bins=(x_bins, y_bins, z_bins))
-        lidar[:, :, 0] = np.array(lidar[:, :, 0] > 0, dtype=np.uint8)
-        lidar[:, :, 1] = np.array(lidar[:, :, 1] > 0, dtype=np.uint8)
-        # Add the waypoints to lidar image
-        if self.display_route:
-            wayptimg = (birdeye[:, :, 0] <= 10) * \
-                (birdeye[:, :, 1] <= 10) * (birdeye[:, :, 2] >= 240)
+        if self.with_lidar:
+            # Lidar image generation
+            point_cloud = []
+            # Get point cloud data
+            for lidar_detection in self.lidar_data:
+                # The api interface has change to LidarDetection.
+                location = lidar_detection.point
+                point_cloud.append([location.x, location.y, -location.z])
+            point_cloud = np.array(point_cloud)
+            # Separate the 3D space to bins for point cloud, x and y is set according to self.lidar_bin,
+            # and z is set to be two bins.
+            y_bins = np.arange(-(self.obs_range - self.d_behind),
+                               self.d_behind+self.lidar_bin, self.lidar_bin)
+            x_bins = np.arange(-self.obs_range/2, self.obs_range /
+                               2+self.lidar_bin, self.lidar_bin)
+            z_bins = [-self.lidar_height-1, -self.lidar_height+0.25, 1]
+            # Get lidar image according to the bins
+            lidar, _ = np.histogramdd(
+                point_cloud, bins=(x_bins, y_bins, z_bins))
+            lidar[:, :, 0] = np.array(lidar[:, :, 0] > 0, dtype=np.uint8)
+            lidar[:, :, 1] = np.array(lidar[:, :, 1] > 0, dtype=np.uint8)
+            # Add the waypoints to lidar image
+            if self.display_route:
+                wayptimg = (birdeye[:, :, 0] <= 10) * \
+                    (birdeye[:, :, 1] <= 10) * (birdeye[:, :, 2] >= 240)
 
-        else:
-            wayptimg = birdeye[:, :, 0] < 0  # Equal to a zero matrix
-        wayptimg = np.expand_dims(wayptimg, axis=2)
-        wayptimg = np.fliplr(np.rot90(wayptimg, 3))
+            else:
+                wayptimg = birdeye[:, :, 0] < 0  # Equal to a zero matrix
+            wayptimg = np.expand_dims(wayptimg, axis=2)
+            wayptimg = np.fliplr(np.rot90(wayptimg, 3))
 
-        # Get the final lidar image
-        lidar = np.concatenate((lidar, wayptimg), axis=2)
-        lidar = np.flip(lidar, axis=1)
-        lidar = np.rot90(lidar, 1)
-        lidar = lidar * 255
+            # Get the final lidar image
+            lidar = np.concatenate((lidar, wayptimg), axis=2)
+            lidar = np.flip(lidar, axis=1)
+            lidar = np.rot90(lidar, 1)
+            lidar = lidar * 255
 
-        # Display lidar image
-        lidar_surface = rgb_to_display_surface(lidar, self.display_size)
-        self.display.blit(lidar_surface, (self.display_size, 0))
+            # Display lidar image
+            lidar_surface = rgb_to_display_surface(lidar, self.display_size)
+            self.display.blit(lidar_surface, (self.display_size, 0))
 
         # Display camera image
         camera = resize(self.camera_img, (self.obs_size, self.obs_size)) * 255
@@ -628,13 +638,14 @@ class CarlaEnv(gym.Env):
         pixor_state = [ego_x, ego_y, np.cos(ego_yaw), np.sin(ego_yaw), speed]
 
         obs = {
-            'camera': camera.astype(np.uint8),
-            'lidar': lidar.astype(np.uint8),
+            # 'camera': camera.astype(np.uint8),
             'birdeye': birdeye.astype(np.uint8),
-            'state': state,
+            # 'state': state,
         }
+        if self.with_lidar:
+            obs['lidar_state'] = lidar.astype(np.uint8)
 
-        if self.pixor:
+        if self.pixor and False:
             obs.update({
                 'roadmap': roadmap.astype(np.uint8),
                 'vh_clas': np.expand_dims(vh_clas, -1).astype(np.float32),
@@ -728,11 +739,12 @@ if __name__ == "__main__":
         entry_point='evolve_car.simulator.core.carla_env:CarlaEnv',
     )
     # Set gym-carla environment
-    env = gym.make('carla-v0', config={"port": 3006})
-    obs = env.reset()
+    env = gym.make('carla-v0', config={"port": 4010})
+    obs, _ = env.reset()
 
     while True:
-        action = [2.0, 0.0]
-        obs, r, done, info = env.step(action)
+        action = [2.0, 0.1]
+        obs, r, done, _, info = env.step(action)
         if done:
-            obs = env.reset()
+            obs, _ = env.reset()
+            print(obs.keys())
