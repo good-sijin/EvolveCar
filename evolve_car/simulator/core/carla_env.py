@@ -24,20 +24,23 @@
 
 import copy
 import logging
+import os
 import random
+import signal
+import subprocess
 import time
 from typing import Optional
 
 import carla
 import gymnasium as gym
 import numpy as np
-from gymnasium.spaces import Box, Dict, Discrete
-from gymnasium.utils import seeding
-from skimage.transform import resize
-
+import psutil
 from evolve_car.simulator.core.misc import *
 from evolve_car.simulator.core.render import BirdeyeRender
 from evolve_car.simulator.core.route_planner import RoutePlanner
+from gymnasium.spaces import Box, Dict, Discrete
+from gymnasium.utils import seeding
+from skimage.transform import resize
 
 
 class CarlaEnv(gym.Env):
@@ -74,6 +77,10 @@ class CarlaEnv(gym.Env):
         self.pixor = config.get('pixor', True)
         self.pixor_size = config.get('pixor_size', 64)
         self.with_lidar = config.get('with_lidar', False)
+
+        # -----------------Carla
+        self.carla_quality_level = config.get('quality_level', 'low')
+
         self.dests = None
         # Action space for the car are acc and steering angle.
         acc_range = config.get("acc_range", [-3.0, 3.0])
@@ -110,10 +117,11 @@ class CarlaEnv(gym.Env):
 
         # Connect to carla server and get world object
         logging.info("connecting to Carla server...")
-        client = carla.Client('localhost', config.get("port", 3004))
-        client.set_timeout(10.0)
-        # print(client.get_available_maps())
-        self.world = client.load_world(
+        self.init_server()
+        self.connect_client()
+        self.client.set_timeout(10.0)
+
+        self.world = self.client.load_world(
             config.get("town", "/Game/Carla/Maps/Town10HD_Opt"))
         logging.info("Carla server connected!")
 
@@ -178,6 +186,65 @@ class CarlaEnv(gym.Env):
                 self.pixor_size))  # make a canvas with coordinates
             x, y = x.flatten(), y.flatten()
             self.pixel_grid = np.vstack((x, y)).T
+
+    def is_used(self, port):
+        """Checks whether or not a port is used"""
+        return port in [conn.laddr.port for conn in psutil.net_connections()]
+
+    def init_server(self):
+        """Start a server on a random port"""
+        self.server_port = random.randint(15000, 32000)
+
+        # Ray tends to start all processes simultaneously. Use random delays to avoid problems
+        time.sleep(random.uniform(0, 1))
+
+        uses_server_port = self.is_used(self.server_port)
+        uses_stream_port = self.is_used(self.server_port + 1)
+        while uses_server_port and uses_stream_port:
+            if uses_server_port:
+                print("Is using the server port: " + self.server_port)
+            if uses_stream_port:
+                print("Is using the streaming port: " + str(self.server_port+1))
+            self.server_port += 2
+            uses_server_port = self.is_used(self.server_port)
+            uses_stream_port = self.is_used(self.server_port+1)
+
+        server_command = [
+            "{}/CarlaUE4.sh".format(os.environ.get("CARLA_ROOT", "/home/carla")),
+        ]
+
+        server_command += [
+            "--carla-rpc-port={}".format(self.server_port),
+            "-quality-level={}".format(self.carla_quality_level),
+            "-RenderOffScreen",
+        ]
+
+        server_command_text = " ".join(map(str, server_command))
+        self.server_process = subprocess.Popen(
+            server_command_text,
+            shell=True,
+            preexec_fn=os.setsid,
+            stdout=open(os.devnull, "w"),
+        )
+        print(server_command_text)
+
+    def connect_client(self, host="localhost", retries_on_error=5, timeout=10):
+        """Connect to the client"""
+
+        for i in range(retries_on_error):
+            try:
+                self.client = carla.Client(host, self.server_port)
+                self.client.set_timeout(timeout)
+                self.world = self.client.get_world()
+                return
+
+            except Exception as e:
+                print(" Waiting for server to be ready: {}, attempt {} of {}".format(
+                    e, i + 1, retries_on_error))
+                time.sleep(3)
+
+        raise Exception(
+            "Cannot connect to server. Try increasing 'timeout' or 'retries_on_error' at the carla configuration")
 
     def reset(self, *, seed=None, options=None):
         # Clear sensor objects
@@ -689,7 +756,7 @@ class CarlaEnv(gym.Env):
         # cost for lateral acceleration
         r_lat = - abs(self.ego.get_control().steer) * lspeed_lon**2
 
-        r = 200*r_collision + 1*lspeed_lon + 10 * \
+        r = 20*r_collision + 1*lspeed_lon + 10 * \
             r_fast + 1*r_out + r_steer*5 + 0.2*r_lat - 0.1
 
         return r
@@ -729,6 +796,14 @@ class CarlaEnv(gym.Env):
                         actor.stop()
                     actor.destroy()
 
+    def close(self):
+        print("Terminating carla...")
+        self.server_process.kill()
+        self.server_process.wait()
+        os.killpg(self.server_process.pid, signal.SIGTERM)
+        # Only way to kill the carla.
+        os.system("pkill -f CarlaUE4-Linux-Shipping")
+
 
 if __name__ == "__main__":
     # Start carla outside of the script:
@@ -740,8 +815,16 @@ if __name__ == "__main__":
     )
     # Set gym-carla environment
     env = gym.make('carla-v0', config={"port": 4010})
-    obs, _ = env.reset()
 
+    def signal_handler(signal, frame):
+        import sys
+        print('\nSignal Catched! You have just type Ctrl+C!')
+        env.close()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    obs, _ = env.reset()
     while True:
         action = [2.0, 0.1]
         obs, r, done, _, info = env.step(action)
