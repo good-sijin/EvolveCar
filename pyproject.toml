@@ -9,6 +9,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
+    "ale-py>=0.10.1",
     "autodoc-pydantic>=2.2.0",
     "autopep8>=2.3.2",
     "carla>=0.9.15",
@@ -16,6 +17,7 @@ dependencies = [
     "matplotlib>=3.10.0",
     "myst-parser>=4.0.0",
     "opencv-python>=4.10.0.84",
+    "psutil>=6.1.1",
     "pydata-sphinx-theme>=0.16.1",
     "pygame>=2.6.1",
     "ray[rllib]>=2.40.0",
@@ -28,5 +30,11 @@ dependencies = [
     "sphinx-tabs>=3.4.7",
     "sphinxcontrib-jquery>=4.1",
     "sphinxcontrib-mermaid>=1.0.0",
+    "tensorboard>=2.18.0",
     "torch>=2.5.1",
 ]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203"]
+max-complexity = 10
