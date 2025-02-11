@@ -37,11 +37,11 @@ def main():
             # How many GPUs does each Learner need? If you have more than 1 GPU or only
             # one Learner, you should set this to 1, otherwise, set this to some
             # fraction.
-            num_gpus_per_learner=0.4,
+            num_gpus_per_learner=1,
         )
 
         .training(
-            minibatch_size=2,
+            minibatch_size=1,
             train_batch_size=1000,
             num_epochs=6,
             lr=0.01,
@@ -53,10 +53,10 @@ def main():
                     "conv_filters": [
                         # num filters, kernel wxh, stride wxh, padding type
                         [4, 3, 2, "same"],
+                        [4, 3, 2, "same"],
                         [8, 3, 2, "same"],
-                        [16, 3, 2, "same"],
-                        [32, 3, 2, "same"],
-                        [16, 16, 1, "valid"],
+                        [8, 3, 2, "same"],
+                        [8, 16, 1, "valid"],
                     ],
                 },
             ),
@@ -83,7 +83,7 @@ def main():
 
     # Get the best checkpoint corresponding to the best result.
     best_checkpoint = best_result.checkpoint
-    print("best_checkpoint:", best_checkpoint.path)
+    print("best_checkpoint:", best_checkpoint)
 
 
 def inference():
