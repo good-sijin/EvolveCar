@@ -28,7 +28,9 @@ def main():
             env_config={"port": 4019},
         )
         # Only allow to use on runner right now, but could be run in parallel in the near future.
-        .env_runners(num_env_runners=1)
+        .env_runners(num_env_runners=1,
+                     sample_timeout_s=100,
+                     )
         .learners(
             # How many Learner workers do we need? If you have more than 1 GPU,
             # set this parameter to the number of GPUs available.
@@ -63,7 +65,6 @@ def main():
         )
         .resources(
             num_cpus_per_worker=4,
-
         )
     )
 
@@ -72,18 +73,22 @@ def main():
         "PPO",
         param_space=config,
         run_config=train.RunConfig(
-            stop={"env_runners/episode_return_mean": 1000.0},
+            stop={"training_iteration": 3},
+        ),
+        tune_config=tune.TuneConfig(
+            reuse_actors=True,
         ),
     )
 
     results = tuner.fit()
-    best_result = results.get_best_result(
-        metric="env_runners/episode_return_mean", mode="max"
-    )
+    print(results)
+    # best_result = results.get_best_result(
+    #     metric="env_runners/episode_return_mean", mode="max"
+    # )
 
-    # Get the best checkpoint corresponding to the best result.
-    best_checkpoint = best_result.checkpoint
-    print("best_checkpoint:", best_checkpoint)
+    # # Get the best checkpoint corresponding to the best result.
+    # best_checkpoint = best_result.checkpoint
+    # print("best_checkpoint:", best_checkpoint)
 
 
 def inference():

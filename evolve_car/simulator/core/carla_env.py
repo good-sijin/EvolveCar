@@ -73,7 +73,7 @@ class CarlaEnv(gym.Env):
         # desired speed (m/s)
         self.desired_speed = config.get('desired_speed', 8)
         self.max_ego_spawn_times = config.get('max_ego_spawn_times', 200)
-        self.display_route = config.get('display_route', True)
+        self.display_route = config.get('display_route', False)
         self.pixor = config.get('pixor', True)
         self.pixor_size = config.get('pixor_size', 64)
         self.with_lidar = config.get('with_lidar', False)
@@ -787,7 +787,12 @@ class CarlaEnv(gym.Env):
 
         return False
 
-    def _clear_all_actors(self, actor_filters):
+    def _clear_all_actors(self, actor_filters=['sensor.other.collision',
+                                'sensor.lidar.ray_cast',
+                               'sensor.camera.rgb',
+                                'vehicle.*',
+                                'controller.ai.walker',
+                                'walker.*']):
         """Clear specific actors."""
         for actor_filter in actor_filters:
             for actor in self.world.get_actors().filter(actor_filter):
