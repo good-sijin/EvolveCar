@@ -174,3 +174,4 @@ data/
 myenv/
 uv.lock
 
+ray_results/
