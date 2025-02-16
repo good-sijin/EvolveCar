@@ -9,6 +9,8 @@ from ray.rllib.utils.test_utils import (
 )
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 
+from ray import train, tune
+
 
 def main():
     parser = add_rllib_example_script_args()
@@ -68,35 +70,43 @@ def main():
         )
     )
 
-    from ray import train, tune
-    tuner = tune.Tuner(
-        "PPO",
-        param_space=config,
-        run_config=train.RunConfig(
-            stop={"training_iteration": 3},
-        ),
-        tune_config=tune.TuneConfig(
-            reuse_actors=True,
-        ),
-    )
+    def train_with_tune():
+        tuner = tune.Tuner(
+            "PPO",
+            param_space=config,
+            run_config=train.RunConfig(
+                stop={"training_iteration": 3},
+                storage_path="/work/05project/YYAI/EvolveCar/ray_results"
+            ),
+            tune_config=tune.TuneConfig(
+                reuse_actors=True,
+            ),
+        )
+        results = tuner.fit()
+        print(results)
 
-    results = tuner.fit()
-    print(results)
-    # best_result = results.get_best_result(
-    #     metric="env_runners/episode_return_mean", mode="max"
-    # )
+    def restore_with_tune():
+        experiment_path = '/work/05project/YYAI/EvolveCar/ray_results/PPO_2025-02-13_07-33-39/'
+        restored_tuner = tune.Tuner.restore(
+            experiment_path, trainable=get_trainable_cls('PPO'))
+        result_grid = restored_tuner.get_results()
+        best_result = result_grid.get_best_result(
+            metric="env_runners/episode_return_mean", mode="max"
+        )
+        best_checkpoint = best_result.checkpoint
+        print(best_checkpoint)
 
-    # # Get the best checkpoint corresponding to the best result.
-    # best_checkpoint = best_result.checkpoint
-    # print("best_checkpoint:", best_checkpoint)
+    # train_with_tune()
+
+    restore_with_tune()
 
 
 def inference():
-    from ray.rllib.algorithms.algorithm import Algorithm
-
-    path_to_checkpoint = '.log/PPO_2025-01-21_09-51-55/driver_artifacts/PPO_CarlaEnv_4b181_000000_2'
-    restore_ppo = Algorithm.from_checkpoint(path_to_checkpoint)
-    print(restore_ppo)
+    import ray
+    experiment_path = 'ray_results/PPO_2025-02-13_07-33-39/PPO_CarlaEnv_d0004_00000_0_2025-02-13_07-33-50/checkpoint_000000'
+    restored_tuner = ray.tune.Tuner.restore(
+        experiment_path, trainable=get_trainable_cls('PPO'))
+    print(restored_tuner)
 
 
 if __name__ == "__main__":
