@@ -55,12 +55,14 @@ def main():
                 module_class=NaiveCNN,
                 model_config={
                     "conv_filters": [
-                        # num filters, kernel wxh, stride wxh, padding type
-                        [4, 3, 2, "same"],
-                        [4, 3, 2, "same"],
-                        [8, 3, 2, "same"],
-                        [8, 3, 2, "same"],
-                        [8, 16, 1, "valid"],
+                        # num filters, kernel wxh, stride wxh, padding
+                        [4, 7, 2, (3, 3)],  # 128
+                        [4, 3, 2, (1, 1)],  # 64
+                        [8, 3, 2, (1, 1)],  # 32
+                        [16, 3, 2, (1, 1)],  # 16
+                        [16, 3, 2, (1, 1)],  # 8
+                        [32, 3, 2, (1, 1)],  # 4
+                        [32, 4, 1, 0],  # 4
                     ],
                 },
             ),
@@ -70,13 +72,15 @@ def main():
         )
     )
 
-    def train_with_tune():
+    def train_with_tune(result_path="/work/05project/YYAI/EvolveCar/ray_results"):
         tuner = tune.Tuner(
             "PPO",
             param_space=config,
             run_config=train.RunConfig(
                 stop={"training_iteration": 3},
-                storage_path="/work/05project/YYAI/EvolveCar/ray_results"
+                storage_path=result_path,
+                checkpoint_config=train.CheckpointConfig(
+                    checkpoint_frequency=10, checkpoint_at_end=True),
             ),
             tune_config=tune.TuneConfig(
                 reuse_actors=True,
@@ -96,21 +100,10 @@ def main():
         best_checkpoint = best_result.checkpoint
         print(best_checkpoint)
 
-    # train_with_tune()
+    train_with_tune()
 
-    restore_with_tune()
-
-
-def inference():
-    import ray
-    experiment_path = 'ray_results/PPO_2025-02-13_07-33-39/PPO_CarlaEnv_d0004_00000_0_2025-02-13_07-33-50/checkpoint_000000'
-    restored_tuner = ray.tune.Tuner.restore(
-        experiment_path, trainable=get_trainable_cls('PPO'))
-    print(restored_tuner)
+    # restore_with_tune()
 
 
 if __name__ == "__main__":
-    if False:
-        inference()
-    else:
-        main()
+    main()

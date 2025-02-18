@@ -37,24 +37,22 @@ class NaiveCNN(TorchRLModule, ValueFunctionAPI):
         width, height, in_depth = self.observation_space['birdeye'].shape
         in_size = [width, height]
         for filter_specs in conv_filters:
-            if len(filter_specs) == 4:
-                out_depth, kernel_size, strides, padding = filter_specs
-            else:
-                out_depth, kernel_size, strides = filter_specs
-                padding = "same"
+            assert len(filter_specs) == 4
+            out_depth, kernel_size, strides, padding = filter_specs
 
             # Pad like in tensorflow's SAME mode.
-            if padding == "same":
-                padding_size, out_size = same_padding(
-                    in_size, kernel_size, strides)
-                layers.append(nn.ZeroPad2d(padding_size))
-            # No actual padding is performed for "valid" mode, but we will still
-            # compute the output size (input for the next layer).
-            else:
-                out_size = valid_padding(in_size, kernel_size, strides)
+            # if padding == "same":
+            #     padding_size, out_size = same_padding(
+            #         in_size, kernel_size, strides)
+            #     layers.append(nn.ZeroPad2d(padding_size))
+            #     # layers.append(PrintLayer())
+            # # No actual padding is performed for "valid" mode, but we will still
+            # # compute the output size (input for the next layer).
+            # else:
+            #     out_size = valid_padding(in_size, kernel_size, strides)
 
             layer = nn.Conv2d(in_depth, out_depth,
-                              kernel_size, strides, bias=True)
+                              kernel_size, strides, bias=True, padding=padding)
             # Initialize CNN layer kernel and bias.
             nn.init.xavier_uniform_(layer.weight)
             nn.init.zeros_(layer.bias)
@@ -62,7 +60,7 @@ class NaiveCNN(TorchRLModule, ValueFunctionAPI):
             # Activation.
             layers.append(nn.ReLU())
 
-            in_size = out_size
+            # in_size = out_size
             in_depth = out_depth
 
         self._base_cnn_stack = nn.Sequential(*layers)
@@ -70,12 +68,9 @@ class NaiveCNN(TorchRLModule, ValueFunctionAPI):
         # Add the final CNN 1x1 layer with num_filters == num_actions to be reshaped to
         # yield the logits (no flattening, no additional linear layers required).
         action_n = self.action_space.shape[0]
-        _final_conv = nn.Conv2d(in_depth, action_n, 1, 1, bias=True)
-        nn.init.xavier_uniform_(_final_conv.weight)
-        nn.init.zeros_(_final_conv.bias)
-        self._logits = nn.Sequential(
-            nn.ZeroPad2d(same_padding(in_size, 1, 1)[0]), _final_conv
-        )
+        self._logits = nn.Conv2d(in_depth, action_n, 1, 1, bias=True)
+        nn.init.xavier_uniform_(self._logits.weight)
+        nn.init.zeros_(self._logits.bias)
 
         self._values = nn.Linear(in_depth, 1)
         # Mimick old API stack behavior of initializing the value function with `normc`
@@ -145,21 +140,23 @@ def main():
                       action_space=Box(-1, 1, (2,), dtype=np.float32),
                       model_config={
                           "conv_filters": [
-                              # num filters, kernel wxh, stride wxh, padding type
-                              [4, 3, 2, "same"],
-                              [8, 3, 2, "same"],
-                              [16, 3, 2, "same"],
-                              [32, 3, 2, "same"],
-                              [16, 16, 1, "valid"],
+                              # num filters, kernel wxh, stride wxh, padding
+                              [4, 5, 2, (2, 2)],  # 128
+                              [4, 3, 2, (1, 1)],  # 64
+                              [8, 3, 2, (1, 1)],  # 32
+                              [16, 3, 2, (1, 1)],  # 16
+                              [16, 3, 2, (1, 1)],  # 8
+                              [32, 3, 2, (1, 1)],  # 4
+                              [32, 4, 1, 0],  # 1
                           ],
                       },
                       )
-
     B, w, h, c = (1, 256, 256, 3)
     data = torch.from_numpy(
         np.random.random_sample(size=(B, w, h, c)).astype(np.float32)
     )
-    my_net.forward_train({"obs": {"birdeye": data}})
+    result = my_net.forward({"obs": {"birdeye": data}})
+    print(result['action_dist_inputs'].shape)
 
     num_all_params = sum(int(np.prod(p.size())) for p in my_net.parameters())
     print(f"num params = {num_all_params}")
