@@ -202,9 +202,9 @@ class CarlaEnv(gym.Env):
         uses_stream_port = self.is_used(self.server_port + 1)
         while uses_server_port and uses_stream_port:
             if uses_server_port:
-                print("Is using the server port: " + self.server_port)
+                print("Is using the server port: " , self.server_port)
             if uses_stream_port:
-                print("Is using the streaming port: " + str(self.server_port+1))
+                print("Is using the streaming port: " , str(self.server_port+1))
             self.server_port += 2
             uses_server_port = self.is_used(self.server_port)
             uses_stream_port = self.is_used(self.server_port+1)

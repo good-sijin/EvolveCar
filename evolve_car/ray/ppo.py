@@ -10,6 +10,7 @@ from ray.rllib.utils.test_utils import (
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 
 from ray import train, tune
+import os
 
 
 def main():
@@ -46,8 +47,8 @@ def main():
 
         .training(
             minibatch_size=1,
-            train_batch_size=1000,
-            num_epochs=6,
+            train_batch_size=64,
+            num_epochs=32,
             lr=0.01,
         )
         .rl_module(
@@ -72,13 +73,14 @@ def main():
         )
     )
 
-    def train_with_tune(result_path="/work/05project/YYAI/EvolveCar/ray_results"):
+    def train_with_tune():
+        cur_path = os.getcwd()
         tuner = tune.Tuner(
             "PPO",
             param_space=config,
             run_config=train.RunConfig(
-                stop={"training_iteration": 3},
-                storage_path=result_path,
+                stop={"training_iteration": 40},
+                storage_path=f"{cur_path}/ray_results"
                 checkpoint_config=train.CheckpointConfig(
                     checkpoint_frequency=10, checkpoint_at_end=True),
             ),
@@ -90,7 +92,7 @@ def main():
         print(results)
 
     def restore_with_tune():
-        experiment_path = '/work/05project/YYAI/EvolveCar/ray_results/PPO_2025-02-13_07-33-39/'
+        experiment_path = '/root/autodl-fs/code/EvolveCar/ray_results/PPO_2025-02-13_07-33-39/'
         restored_tuner = tune.Tuner.restore(
             experiment_path, trainable=get_trainable_cls('PPO'))
         result_grid = restored_tuner.get_results()
