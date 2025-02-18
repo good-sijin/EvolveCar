@@ -80,7 +80,7 @@ def main():
             param_space=config,
             run_config=train.RunConfig(
                 stop={"training_iteration": 40},
-                storage_path=f"{cur_path}/ray_results"
+                storage_path=f"{cur_path}/ray_results",
                 checkpoint_config=train.CheckpointConfig(
                     checkpoint_frequency=10, checkpoint_at_end=True),
             ),
