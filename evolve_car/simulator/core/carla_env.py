@@ -69,7 +69,7 @@ class CarlaEnv(gym.Env):
         # distance behind the ego vehicle (meter)
         self.d_behind = config.get('d_behind', 12)
         # threshold for out of lane
-        self.out_lane_thres = config.get('out_lane_thres', 2.0)
+        self.out_lane_thres = config.get('out_lane_thres', 1.0)
         # desired speed (m/s)
         self.desired_speed = config.get('desired_speed', 8)
         self.max_ego_spawn_times = config.get('max_ego_spawn_times', 200)
@@ -117,7 +117,11 @@ class CarlaEnv(gym.Env):
 
         # Connect to carla server and get world object
         logging.info("connecting to Carla server...")
-        self.init_server()
+        if config.get("port", None) is not None:
+            self.server_port = int(config.get('port'))
+            print("use existing port: ", self.server_port)
+        else:
+            self.init_server()
         self.connect_client()
         self.client.set_timeout(10.0)
 
@@ -202,9 +206,9 @@ class CarlaEnv(gym.Env):
         uses_stream_port = self.is_used(self.server_port + 1)
         while uses_server_port and uses_stream_port:
             if uses_server_port:
-                print("Is using the server port: " , self.server_port)
+                print("Is using the server port: ", self.server_port)
             if uses_stream_port:
-                print("Is using the streaming port: " , str(self.server_port+1))
+                print("Is using the streaming port: ", str(self.server_port+1))
             self.server_port += 2
             uses_server_port = self.is_used(self.server_port)
             uses_stream_port = self.is_used(self.server_port+1)
@@ -723,43 +727,29 @@ class CarlaEnv(gym.Env):
         return obs
 
     def _get_reward(self):
-        """Calculate the step reward."""
-        # reward for speed tracking
+        # Speed reward, up 30.0 (km/h)
         v = self.ego.get_velocity()
         speed = np.sqrt(v.x**2 + v.y**2)
-        r_speed = -abs(speed - self.desired_speed)
+        reward_speed = np.clip(speed, 0.0, 30.0) / 10
+        if reward_speed < 3:
+            reward_speed = -1
 
-        # reward for collision
-        r_collision = 0
-        if len(self.collision_hist) > 0:
-            r_collision = -1
-
-        # reward for steering:
-        r_steer = -self.ego.get_control().steer**2
-
-        # reward for out of lane
+        reward_lane_keeping = 0
         ego_x, ego_y = get_pos(self.ego)
         dis, w = get_lane_dis(self.waypoints, ego_x, ego_y)
-        r_out = 0
         if abs(dis) > self.out_lane_thres:
-            r_out = -1
+            reward_lane_keeping = -2*abs(dis)
+        else:
+            reward_lane_keeping = 1
 
-        # longitudinal speed
-        lspeed = np.array([v.x, v.y])
-        lspeed_lon = np.dot(lspeed, w)
+        reward_collision = 0
+        if len(self.collision_hist) > 0:
+            reward_collision -= 100
+            print("distance", dis, len(self.collision_hist))
 
-        # cost for too fast
-        r_fast = 0
-        if lspeed_lon > self.desired_speed:
-            r_fast = -1
-
-        # cost for lateral acceleration
-        r_lat = - abs(self.ego.get_control().steer) * lspeed_lon**2
-
-        r = 20*r_collision + 1*lspeed_lon + 10 * \
-            r_fast + 1*r_out + r_steer*5 + 0.2*r_lat - 0.1
-
-        return r
+        reward = reward_collision + reward_speed + reward_lane_keeping
+        # print(reward_collision, reward_speed,  reward_lane_keeping)
+        return reward
 
     def _terminal(self):
         """Calculate whether to terminate the current episode."""
@@ -788,11 +778,11 @@ class CarlaEnv(gym.Env):
         return False
 
     def _clear_all_actors(self, actor_filters=['sensor.other.collision',
-                                'sensor.lidar.ray_cast',
-                               'sensor.camera.rgb',
-                                'vehicle.*',
-                                'controller.ai.walker',
-                                'walker.*']):
+                                               'sensor.lidar.ray_cast',
+                                               'sensor.camera.rgb',
+                                               'vehicle.*',
+                                               'controller.ai.walker',
+                                               'walker.*']):
         """Clear specific actors."""
         for actor_filter in actor_filters:
             for actor in self.world.get_actors().filter(actor_filter):
@@ -819,7 +809,7 @@ if __name__ == "__main__":
         entry_point='evolve_car.simulator.core.carla_env:CarlaEnv',
     )
     # Set gym-carla environment
-    env = gym.make('carla-v0', config={"port": 4010})
+    env = gym.make('carla-v0', config={"port": 29623})
 
     def signal_handler(signal, frame):
         import sys
@@ -831,8 +821,7 @@ if __name__ == "__main__":
 
     obs, _ = env.reset()
     while True:
-        action = [2.0, 0.1]
+        action = [1, 0.1]
         obs, r, done, _, info = env.step(action)
         if done:
             obs, _ = env.reset()
-            print(obs.keys())
